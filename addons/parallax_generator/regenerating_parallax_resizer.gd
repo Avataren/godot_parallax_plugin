@@ -2,51 +2,52 @@
 @tool
 extends ParallaxLayer
 
-# This will hold a reference to our mountain node.
-var _mountain_node: Node 
+var _mountain_node: Polygon2D
+var _is_initialized: bool = false
 
+# --- ENTRY POINT 1: For the Editor Plugin ---
+# Your generator will call this function manually.
+func initialize_for_editor():
+	# We just need to find the node. No signals needed in the editor.
+	_find_child_node()
+
+# --- ENTRY POINT 2: For Runtime ---
+# Godot calls this automatically when the game starts.
 func _ready():
-	# Defer setup to ensure child nodes are available.
-	call_deferred("setup_resizer")
+	# At runtime, we must defer to ensure the scene tree is fully ready.
+	call_deferred("setup_runtime_connections")
 
-func setup_resizer():
-	# Find our procedural mountain child node by checking if it has our 'generate' method.
-	for child in get_children():
-		if child.has_method("generate"):
-			_mountain_node = child
-			break
+# --- SHARED LOGIC ---
+
+# Finds the child node and stores a reference to it.
+func _find_child_node():
+	if _is_initialized: return
+
+	# Use find_child() for a clear, direct search.
+	_mountain_node = find_child("ProceduralMountain", false) # `false` means don't check grandchildren.
+
+	if is_instance_valid(_mountain_node):
+		_is_initialized = true
+	else:
+		printerr("Resizer Error: Could not find a child node named 'ProceduralMountain'.")
+
+# Sets up the runtime signals for resizing.
+func setup_runtime_connections():
+	_find_child_node() # Make sure we have the reference.
 	
-	if not _mountain_node:
-		print("Resizer Error: No child node with a 'generate' method found.")
-		set_process(false)
-		return
+	if not _is_initialized: return
 
-	# We only need this logic to run in the game, not the editor.
-	if Engine.is_editor_hint():
-		return
+	if Engine.is_editor_hint(): return # Don't connect signals in the editor.
 
-	# Connect to the viewport's "size_changed" signal.
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
-	
-	# Call once at startup to ensure the size is correct from the beginning.
-	_on_viewport_size_changed()
-
+	_on_viewport_size_changed() # Call once at startup.
 
 func _on_viewport_size_changed():
-	if not is_instance_valid(_mountain_node):
-		return
+	if not is_instance_valid(_mountain_node): return
 
 	var viewport_width = get_viewport().get_visible_rect().size.x
-	
-	# This 'base_width' was set by your generator plugin. We use it as a minimum.
-	var base_width = motion_mirroring.x 
-	
-	# The new width is the larger of the two: the original width or the current viewport width.
+	var base_width = motion_mirroring.x
 	var new_width = max(base_width, viewport_width)
 
-	# 1. CRITICAL: Tell the mountain to regenerate itself to the new width.
 	_mountain_node.generate(new_width)
-	
-	# 2. CRITICAL: Update the layer's mirroring property to match the new polygon width.
-	# This ensures the infinite scroll effect remains seamless.
 	motion_mirroring.x = new_width

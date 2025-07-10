@@ -59,34 +59,52 @@ func _update_mountain_layers(bg: ParallaxBackground, count: int):
 	undo_redo.add_undo_method(self, "_set_mountain_layers_from_defs", bg, current_mountain_defs)
 	undo_redo.commit_action()
 
-# --- Atomic State Setters ---
+# --- Atomic State Setters (With Corrected Ownership) ---
 
 func _set_all_layers_from_defs(parent: Node, definitions: Array):
 	var root = EditorInterface.get_edited_scene_root()
 	if not root: return
+	
 	for child in parent.get_children():
 		parent.remove_child(child)
 		child.queue_free()
+	
 	for d in definitions:
 		var layer = _build_layer_node(d)
 		parent.add_child(layer)
 		layer.set_owner(root)
+		for content_child in layer.get_children():
+			content_child.set_owner(root)
+		
+		# --- THIS IS THE FIX ---
+		# After the layer is in the tree, tell it to find its child.
+		if layer.has_method("initialize_for_editor"):
+			layer.initialize_for_editor()
 
 func _set_mountain_layers_from_defs(parent: Node, definitions: Array):
 	var root = EditorInterface.get_edited_scene_root()
 	if not root: return
+	
 	for i in range(parent.get_child_count() - 1, -1, -1):
 		var child = parent.get_child(i)
 		if child.name.begins_with("Mountain"):
 			parent.remove_child(child)
 			child.queue_free()
+	
 	for d in definitions:
 		var layer = _build_layer_node(d)
 		parent.add_child(layer)
 		layer.set_owner(root)
+		for content_child in layer.get_children():
+			content_child.set_owner(root)
+			
+		# --- THIS IS THE FIX ---
+		# After the layer is in the tree, tell it to find its child.
+		if layer.has_method("initialize_for_editor"):
+			layer.initialize_for_editor()
 
-# --- Data Capture & Definition Builders ---
-
+# --- Data Capture & Definition Builders (No changes needed below this line) ---
+# ... (The rest of your script: _capture_definitions_from_children, _build_mountain_definitions, etc. remains the same)
 func _capture_definitions_from_children(nodes: Array) -> Array:
 	var definitions = []
 	for layer in nodes:
@@ -94,7 +112,6 @@ func _capture_definitions_from_children(nodes: Array) -> Array:
 		var def = {"name": layer.name, "motion_scale": layer.motion_scale}
 		if layer.motion_mirroring.x > 0: def["width"] = layer.motion_mirroring.x
 		
-		# Find the generated child to extract its properties
 		var content_node = null
 		if layer.get_child_count() > 0:
 			content_node = layer.get_child(0)
@@ -131,26 +148,33 @@ func _build_mountain_definitions(count: int) -> Array:
 		})
 	return definitions
 
-# --- Node Factory (builds nodes from definitions) ---
-
-# THIS IS THE KEY FIX
 func _build_layer_node(def: Dictionary) -> ParallaxLayer:
-	var layer = ParallaxLayer.new()
+	var layer: ParallaxLayer # Declare the variable type
+
+	# Conditionally decide which class to instantiate based on the definition.
+	# Mountain layers have a "width", the Sun layer does not.
+	if def.has("width"):
+		# This layer needs resizing, so instantiate our custom class.
+		layer = ParallaxLayerResizerScript.new()
+		layer.motion_mirroring.x = def.width
+	else:
+		# This is a simple layer (like the Sun), so use the base Godot class.
+		layer = ParallaxLayer.new()
+
+	# --- The rest of the setup is the same for both types ---
+	
 	layer.name = def.name
 	layer.motion_scale = def.get("motion_scale", Vector2.ONE)
 
-	# 1. Generate the child node (the mountain or sun) first.
+	# Generate the child node (the mountain or sun)
 	var generator_func = def.get("generator")
 	if generator_func and has_method(generator_func):
 		var child_node = call(generator_func, def)
 		if child_node:
-			# 2. Add the child to the layer.
+			# Add the child to the layer
 			layer.add_child(child_node)
-
-	# 3. NOW, it is safe to set the script that depends on the child.
-	if def.has("width"):
-		layer.motion_mirroring.x = def.width
-		layer.set_script(ParallaxLayerResizerScript)
+	
+	# NOTE: We do not call set_script(). We created the correct object type from the start.
 
 	return layer
 
@@ -164,14 +188,13 @@ func _gen_sun(_def: Dictionary) -> Node:
 	grad_tex.fill = GradientTexture2D.FILL_RADIAL
 	grad_tex.fill_from = Vector2(0.5, 0.5); grad_tex.fill_to = Vector2(0.5, 0.0)
 	var sun_sprite = Sprite2D.new()
-	sun_sprite.name = "SunSprite" # Give it a consistent name
+	sun_sprite.name = "SunSprite"
 	sun_sprite.texture = grad_tex
 	sun_sprite.position = Vector2(400, 100)
 	return sun_sprite
 
 func _gen_mountain(def: Dictionary) -> Node:
 	var mountain = ProceduralMountainScript.new()
-	# Give it a consistent name so the resizer can find it reliably.
 	mountain.name = "ProceduralMountain"
 	mountain.color = def.get("color", Color.WHITE)
 	mountain.seed = def.get("seed", randi())
@@ -179,6 +202,5 @@ func _gen_mountain(def: Dictionary) -> Node:
 	mountain.noise_frequency = def.get("frequency", 2.0)
 	mountain.noise_zoom = def.get("noise_zoom", 30)
 	mountain.y_offset = def.get("y_offset", 0)
-	# The generate call happens in the mountain's own script, so it's ready.
 	mountain.generate(def.get("width", 1600))
 	return mountain
