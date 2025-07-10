@@ -1,20 +1,6 @@
-[gd_scene load_steps=6 format=3 uid="uid://01q1j3wvjq4n"]
+[gd_scene load_steps=2 format=3 uid="uid://01q1j3wvjq4n"]
 
 [ext_resource type="PackedScene" uid="uid://b68r60h4bolg2" path="res://scenes/simple_player.tscn" id="1_o5qli"]
-[ext_resource type="Script" uid="uid://dithf5tf544d7" path="res://addons/parallax_generator/regenerating_parallax_resizer.gd" id="2_sugp2"]
-[ext_resource type="Script" uid="uid://b4afd2ytgcy8c" path="res://addons/parallax_generator/procedural_mountain.gd" id="3_sugp2"]
-
-[sub_resource type="Gradient" id="Gradient_sugp2"]
-offsets = PackedFloat32Array(0, 0.6, 1)
-colors = PackedColorArray(1, 1, 0, 1, 1, 0.9, 0.2, 1, 1, 0.9, 0.2, 0)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_jyhfs"]
-gradient = SubResource("Gradient_sugp2")
-width = 256
-height = 256
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(0.5, 0)
 
 [node name="Main" type="Node2D"]
 
@@ -22,53 +8,3 @@ fill_to = Vector2(0.5, 0)
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
 position = Vector2(576, 321)
-
-[node name="ProceduralParallax" type="ParallaxBackground" parent="."]
-
-[node name="Sun" type="ParallaxLayer" parent="ProceduralParallax"]
-motion_scale = Vector2(0, 0)
-
-[node name="@Sprite2D@94508" type="Sprite2D" parent="ProceduralParallax/Sun"]
-position = Vector2(400, 100)
-texture = SubResource("GradientTexture2D_jyhfs")
-
-[node name="MountainFar" type="ParallaxLayer" parent="ProceduralParallax"]
-motion_scale = Vector2(0.3, 1)
-motion_mirroring = Vector2(1600, 0)
-script = ExtResource("2_sugp2")
-
-[node name="@Polygon2D@94509" type="Polygon2D" parent="ProceduralParallax/MountainFar"]
-color = Color(0.5, 0.5, 0.55, 1)
-polygon = PackedVector2Array(0, 305.214, 20, 307.887, 40, 311.61, 60, 308.286, 80, 306.104, 100, 310.912, 120, 312.916, 140, 314.243, 160, 322.657, 180, 331.861, 200, 335.741, 220, 335.027, 240, 337.651, 260, 338.804, 280, 337.596, 300, 339.246, 320, 340.668, 340, 335.368, 360, 330.325, 380, 329.484, 400, 330.499, 420, 333.586, 440, 339.534, 460, 340.378, 480, 338.499, 500, 335.036, 520, 332.478, 540, 330.03, 560, 326.745, 580, 327.07, 600, 328.877, 620, 327.228, 640, 324.309, 660, 318.734, 680, 314.632, 700, 311.885, 720, 311.286, 740, 311.981, 760, 311.833, 780, 312.447, 800, 316.698, 820, 319.771, 840, 322.001, 860, 326.148, 880, 325.011, 900, 318.262, 920, 311.656, 940, 302.452, 960, 293.533, 980, 288.337, 1000, 280.998, 1020, 277.375, 1040, 277.232, 1060, 275.853, 1080, 275.42, 1100, 280.628, 1120, 283.89, 1140, 281.456, 1160, 280.705, 1180, 281.199, 1200, 285.408, 1220, 289.283, 1240, 290.524, 1260, 293.341, 1280, 293.315, 1300, 290.961, 1320, 292.372, 1340, 292.955, 1360, 294.207, 1380, 296.124, 1400, 294.648, 1420, 295.966, 1440, 298.884, 1460, 301.645, 1480, 304.168, 1500, 307.758, 1520, 307.183, 1540, 302.427, 1560, 301.632, 1580, 304.52, 1600, 305.214, 1600, 480, 0, 480)
-script = ExtResource("3_sugp2")
-seed = 2529817233
-amplitude = 90.0
-y_offset = 0.0
-noise_frequency = 2.0
-noise_zoom = 30.0
-
-[node name="MountainMid" type="ParallaxLayer" parent="ProceduralParallax"]
-motion_scale = Vector2(0.5, 1)
-motion_mirroring = Vector2(1600, 0)
-script = ExtResource("2_sugp2")
-
-[node name="@Polygon2D@94510" type="Polygon2D" parent="ProceduralParallax/MountainMid"]
-color = Color(0.4, 0.4, 0.45, 1)
-polygon = PackedVector2Array(0, 320, 20, 317.707, 40, 302.864, 60, 295.516, 80, 295.691, 100, 287.82, 120, 283.105, 140, 295.919, 160, 298.006, 180, 290.004, 200, 297.763, 220, 311.527, 240, 314.065, 260, 312.794, 280, 310.286, 300, 308.932, 320, 308.508, 340, 312.601, 360, 313.478, 380, 308.855, 400, 320, 420, 330.765, 440, 320, 460, 316.223, 480, 318.072, 500, 310.299, 520, 305.67, 540, 316.666, 560, 326.584, 580, 323.627, 600, 318.894, 620, 313.462, 640, 310.796, 660, 300.676, 680, 294.769, 700, 294.381, 720, 284.443, 740, 284.754, 760, 298.672, 780, 311.405, 800, 320, 820, 327.956, 840, 340.383, 860, 346.663, 880, 340.795, 900, 345.241, 920, 337.581, 940, 336.391, 960, 336.856, 980, 343.293, 1000, 344.858, 1020, 347.361, 1040, 346.31, 1060, 337.502, 1080, 316.897, 1100, 312.096, 1120, 313.031, 1140, 317.7, 1160, 321.793, 1180, 324.314, 1200, 320, 1220, 313.024, 1240, 311.706, 1260, 315.39, 1280, 322.204, 1300, 329.044, 1320, 332.573, 1340, 328.569, 1360, 333.869, 1380, 336.153, 1400, 336.61, 1420, 340.835, 1440, 342.331, 1460, 348.572, 1480, 356.883, 1500, 352.057, 1520, 347.048, 1540, 340.996, 1560, 333.195, 1580, 325.322, 1600, 320, 1600, 520, 0, 520)
-script = ExtResource("3_sugp2")
-seed = 4104780938
-amplitude = 110.0
-y_offset = 20.0
-noise_frequency = 2.5
-noise_zoom = 40.0
-
-[node name="MountainClose" type="ParallaxLayer" parent="ProceduralParallax"]
-motion_scale = Vector2(0.7, 1)
-motion_mirroring = Vector2(1600, 0)
-script = ExtResource("2_sugp2")
-
-[node name="@Polygon2D@94511" type="Polygon2D" parent="ProceduralParallax/MountainClose"]
-color = Color(0.3, 0.3, 0.35, 1)
-polygon = PackedVector2Array(0, 310.481, 20, 316.416, 40, 322.524, 60, 307.726, 80, 312.865, 100, 317.225, 120, 314.809, 140, 314.293, 160, 322.987, 180, 337.465, 200, 343.144, 220, 362.669, 240, 367.575, 260, 363.45, 280, 364.514, 300, 386.491, 320, 399.322, 340, 416.037, 360, 418.54, 380, 409.541, 400, 398.969, 420, 385.15, 440, 376.29, 460, 370.366, 480, 357.632, 500, 346.898, 520, 331.914, 540, 331.284, 560, 327.251, 580, 348.988, 600, 366.539, 620, 372.391, 640, 362.998, 660, 361.354, 680, 348.779, 700, 325.143, 720, 318.249, 740, 319.757, 760, 332.266, 780, 327.176, 800, 328.739, 820, 330.868, 840, 328.715, 860, 350.112, 880, 358.115, 900, 373.499, 920, 383.46, 940, 386.415, 960, 373.494, 980, 366.194, 1000, 355.801, 1020, 336.428, 1040, 318.327, 1060, 336.268, 1080, 356.743, 1100, 368.783, 1120, 364.43, 1140, 356.109, 1160, 344.905, 1180, 356.837, 1200, 362.674, 1220, 359.56, 1240, 378.261, 1260, 383.134, 1280, 361.027, 1300, 362.275, 1320, 352.516, 1340, 351.808, 1360, 357.069, 1380, 355.889, 1400, 339.469, 1420, 314.563, 1440, 324.983, 1460, 345.981, 1480, 352.814, 1500, 365.166, 1520, 348.144, 1540, 331.847, 1560, 315.229, 1580, 305.716, 1600, 310.481, 1600, 560, 0, 560)
-script = ExtResource("3_sugp2")
-seed = 139734035

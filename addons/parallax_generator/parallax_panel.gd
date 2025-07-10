@@ -3,76 +3,135 @@ extends VBoxContainer
 
 const ProceduralMountainScript = preload("res://addons/parallax_generator/procedural_mountain.gd")
 const ParallaxLayerResizerScript = preload("res://addons/parallax_generator/regenerating_parallax_resizer.gd")
-# preload("res://addons/parallax_generator/parallax_layer_resizer.gd")
-
-func _ready():
-	pass
 
 func _on_generate_button_pressed() -> void:
 	var root = EditorInterface.get_edited_scene_root()
 	if not root:
 		return
+
 	var undo_redo = EditorInterface.get_editor_undo_redo()
 	undo_redo.create_action("Generate Tiling Parallax")
 
-	# 1) Add the ParallaxBackground
-	var bg = ParallaxBackground.new()
-	bg.name = "ProceduralParallax"
-	undo_redo.add_do_method(root, "add_child", bg)
-	undo_redo.add_undo_method(root, "remove_child", bg)
-	undo_redo.add_do_method(bg, "set_owner", root)
-	
-	undo_redo.add_undo_method(bg, "set_owner", null)
+	# --- Find or Create Parallax Background ---
+	var bg = root.find_child("ProceduralParallax", true, false)
+	if not bg:
+		# If it doesn't exist, create it.
+		bg = ParallaxBackground.new()
+		bg.name = "ProceduralParallax"
+		undo_redo.add_do_method(root, "add_child", bg)
+		undo_redo.add_undo_method(root, "remove_child", bg)
+		undo_redo.add_do_method(bg, "set_owner", root)
+		undo_redo.add_undo_method(bg, "set_owner", null)
+	else:
+		# If it exists, clear its existing children for a full regeneration
+		_clear_all_layers(bg, undo_redo)
 
-	# 2) Layer definitions with a new 'width' property for tiling.
-	var layer_defs = [
-		{
-			"name": "Sun", "generator": "_gen_sun",
-			"motion_scale": Vector2(0.0, 0.0)
-		},
-		{
-			"name": "MountainFar", "generator": "_gen_mountain",
-			"motion_scale": Vector2(0.3, 1.0), "width": 1600,
-			"color": Color(0.5, 0.5, 0.55), "amplitude": 90, "frequency": 2.0, "noise_zoom": 30, "y_offset": 0
-		},
-		{
-			"name": "MountainMid", "generator": "_gen_mountain",
-			"motion_scale": Vector2(0.5, 1.0), "width": 1600,
-			"color": Color(0.4, 0.4, 0.45), "amplitude": 110, "frequency": 2.5, "noise_zoom": 40, "y_offset": 20
-		},
-		{
-			"name": "MountainClose", "generator": "_gen_mountain",
-			"motion_scale": Vector2(0.7, 1.0), "width": 1600,
-			"color": Color(0.3, 0.3, 0.35), "amplitude": 130, "frequency": 3.0, "noise_zoom": 50, "y_offset": 50
-		}
-	]
+	# --- Generate Static Layers (Sun) ---
+	var sun_def = {
+		"name": "Sun", "generator": "_gen_sun",
+		"motion_scale": Vector2(0.0, 0.0)
+	}
+	_create_layer(bg, sun_def, undo_redo, root)
 
-	# Create each layer and configure it
-	for def in layer_defs:
-		var layer = ParallaxLayer.new()
-		layer.name = def.name
-		layer.motion_scale = def.motion_scale
-
-		# NEW: Attach the resizer script to layers that have a width
-		if def.has("width"):
-			layer.motion_mirroring.x = def.width
-			layer.set_script(ParallaxLayerResizerScript)
-
-		# Schedule layer creation...
-		undo_redo.add_do_method(bg, "add_child", layer)
-		
-		# --- FIX: Add this line to set the layer's owner ---
-		undo_redo.add_do_method(layer, "set_owner", root)
-		# ----------------------------------------------------
-		
-		undo_redo.add_undo_method(bg, "remove_child", layer)
-
-		# Call its generator
-		var generator_func = def.generator
-		if has_method(generator_func):
-			call(generator_func, layer, def, undo_redo, root)
+	# --- Generate Mountain Layers based on Slider ---
+	var num_mountain_layers = int(%MountainLayerSlider.value)
+	_generate_mountain_layers(bg, num_mountain_layers, undo_redo, root)
 
 	undo_redo.commit_action()
+
+func _on_mountain_layer_slider_value_changed(value: float) -> void:	
+	print ("Srtting mountain slider amount to " + str(value))
+	%MountainLayerLabel.text = "Mountain Layers:" + str(value)
+	
+	var root = EditorInterface.get_edited_scene_root()
+	if not root:
+		return
+	
+	var bg = root.find_child("ProceduralParallax", true, false)
+	if not bg:
+		# If the parallax node doesn't exist, do nothing.
+		# The user should click "Generate" first.
+		return
+
+	var undo_redo = EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Change Mountain Layers")
+
+	# Clear only the mountain layers
+	_clear_mountain_layers(bg, undo_redo)
+
+	# Generate the new set of mountain layers
+	_generate_mountain_layers(bg, int(value), undo_redo, root)
+	
+	undo_redo.commit_action()
+
+func _generate_mountain_layers(bg: ParallaxBackground, count: int, undo_redo: EditorUndoRedoManager, root: Node) -> void:
+	# Base definitions that will be interpolated for each layer
+	var base_def = {
+		"motion_scale": Vector2(0.3, 1.0), "width": 1600,
+		"color": Color(0.5, 0.5, 0.55), "amplitude": 90, "frequency": 2.0,
+		"noise_zoom": 30, "y_offset": 0
+	}
+	
+	var final_def = {
+		"motion_scale": Vector2(0.9, 1.0),
+		"color": Color(0.2, 0.2, 0.25), "amplitude": 150, "frequency": 3.5,
+		"noise_zoom": 60, "y_offset": 70
+	}
+
+	for i in range(count):
+		# t is our interpolation factor, from 0 (farthest) to 1 (closest)
+		var t = 0.0
+		if count > 1:
+			t = float(i) / (count - 1)
+
+		var def = {
+			"name": "Mountain" + str(i),
+			"generator": "_gen_mountain",
+			"width": base_def.width
+		}
+		
+		# Interpolate properties to create distinct layers
+		def.motion_scale = base_def.motion_scale.lerp(final_def.motion_scale, t)
+		def.color = base_def.color.lerp(final_def.color, t)
+		def.amplitude = lerp(base_def.amplitude, final_def.amplitude, t)
+		def.frequency = lerp(base_def.frequency, final_def.frequency, t)
+		def.noise_zoom = lerp(base_def.noise_zoom, final_def.noise_zoom, t)
+		def.y_offset = lerp(base_def.y_offset, final_def.y_offset, t)
+
+		_create_layer(bg, def, undo_redo, root)
+
+func _create_layer(bg: ParallaxBackground, def: Dictionary, undo_redo: EditorUndoRedoManager, root: Node) -> void:
+	var layer = ParallaxLayer.new()
+	layer.name = def.name
+	layer.motion_scale = def.motion_scale
+
+	if def.has("width"):
+		layer.motion_mirroring.x = def.width
+		layer.set_script(ParallaxLayerResizerScript)
+
+	undo_redo.add_do_method(bg, "add_child", layer)
+	undo_redo.add_do_method(layer, "set_owner", root)
+	undo_redo.add_undo_method(bg, "remove_child", layer)
+
+	var generator_func = def.generator
+	if has_method(generator_func):
+		call(generator_func, layer, def, undo_redo, root)
+
+func _clear_all_layers(bg: ParallaxBackground, undo_redo: EditorUndoRedoManager) -> void:
+	# Important: Iterate backwards when removing children!
+	for i in range(bg.get_child_count() - 1, -1, -1):
+		var child = bg.get_child(i)
+		undo_redo.add_do_method(bg, "remove_child", child)
+		undo_redo.add_undo_method(bg, "add_child", child)
+		# We don't need to manage owner here, as the nodes are not being deleted permanently
+
+func _clear_mountain_layers(bg: ParallaxBackground, undo_redo: EditorUndoRedoManager) -> void:
+	for i in range(bg.get_child_count() - 1, -1, -1):
+		var child = bg.get_child(i)
+		# Only remove layers that start with "Mountain"
+		if child.name.begins_with("Mountain"):
+			undo_redo.add_do_method(bg, "remove_child", child)
+			undo_redo.add_undo_method(bg, "add_child", child)
 
 func _gen_sun(layer: ParallaxLayer, def: Dictionary, undo_redo: EditorUndoRedoManager, root: Node) -> void:
 	# This function remains unchanged.
@@ -95,24 +154,24 @@ func _gen_sun(layer: ParallaxLayer, def: Dictionary, undo_redo: EditorUndoRedoMa
 	undo_redo.add_undo_method(sun_sprite, "set_owner", null)
 
 func _gen_mountain(layer: ParallaxLayer, def: Dictionary, undo_redo: EditorUndoRedoManager, root: Node) -> void:
-	# 1. Create an instance of our new ProceduralMountain node
+	# This function remains unchanged.
 	var mountain = ProceduralMountainScript.new()
-
-	# 2. Configure its properties from the layer definition dictionary
+	mountain.name = "ProceduralMountain" # Give it a consistent name
 	mountain.color = def.get("color", Color.WHITE)
-	mountain.seed = randi() # Give each mountain range a unique seed
+	mountain.seed = randi()
 	mountain.amplitude = def.get("amplitude", 100)
 	mountain.noise_frequency = def.get("frequency", 2.0)
 	mountain.noise_zoom = def.get("noise_zoom", 30)
 	mountain.y_offset = def.get("y_offset", 0)
-	# You can also set other exported properties like fractal_octaves here if needed
 
-	# 3. Perform the initial generation using the width from the definition
 	var initial_width = def.get("width", 1600)
 	mountain.generate(initial_width)
 
-	# 4. Schedule its addition to the scene tree
 	undo_redo.add_do_method(layer, "add_child", mountain)
 	undo_redo.add_undo_method(layer, "remove_child", mountain)
 	undo_redo.add_do_method(mountain, "set_owner", root)
 	undo_redo.add_undo_method(mountain, "set_owner", null)
+
+
+
+	
