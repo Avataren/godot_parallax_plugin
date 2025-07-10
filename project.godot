@@ -24,6 +24,10 @@ window/size/viewport_height=1080
 
 enabled=PackedStringArray("res://addons/parallax_generator/plugin.cfg")
 
+[plugins]
+
+parallax_generator/active_style_path="res://addons/parallax_generator/DefaultStyle.tres"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

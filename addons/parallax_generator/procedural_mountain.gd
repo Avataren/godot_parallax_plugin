@@ -7,7 +7,7 @@ extends Polygon2D
 @export var base_height: float = 300.0
 @export var amplitude: float = 130.0
 @export var y_offset: float = 50.0
-
+@export var ground_y: float = 600.0 
 # --- Noise Settings ---
 @export var noise_frequency: float = 3.0
 @export var noise_zoom: float = 50.0
@@ -16,10 +16,10 @@ extends Polygon2D
 @export var fractal_lacunarity: float = 2.0
 @export var fractal_gain: float = 0.5
 
+var _noise: FastNoiseLite
+
 # --- Detail ---
 @export var step_size: int = 20 # The distance between points on the X-axis
-
-var _noise: FastNoiseLite
 
 # Called when the node is added to the scene.
 func _ready():
@@ -28,8 +28,11 @@ func _ready():
 	_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
 
 # The main generation function. It can be called anytime to redraw the polygon.
-func generate(width: float):
-	if not _noise: _ready() # Ensure noise is initialized
+func generate(width: float, ground_y: float):
+	if not _noise:
+		_noise = FastNoiseLite.new()
+		_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+		_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
 
 	# Configure noise with the latest properties from the inspector
 	_noise.seed = seed
@@ -51,10 +54,12 @@ func generate(width: float):
 		var y_noise = _noise.get_noise_2d(noise_x * noise_frequency, noise_y * noise_frequency)
 		var y = base_height + y_noise * amplitude + y_offset
 		points.append(Vector2(x, y))
-	
+			
 	# Add bottom points to create a solid shape that extends well below the baseline
-	points.append(Vector2(width, base_height + amplitude * 2))
-	points.append(Vector2(0, base_height + amplitude * 2))
+	#points.append(Vector2(width, base_height + amplitude * 2))
+	#points.append(Vector2(0, base_height + amplitude * 2))
+	points.append(Vector2(width, ground_y))
+	points.append(Vector2(0, ground_y))
 
 	# Update the actual polygon with the newly generated points
 	self.polygon = points

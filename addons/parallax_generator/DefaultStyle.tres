@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="ParallaxStyle" load_steps=5 format=3 uid="uid://qf1kj6bituy1"]
+
+[ext_resource type="Script" uid="uid://brm5vqjtufvj3" path="res://addons/parallax_generator/parallax_style.gd" id="1_ia3lo"]
+[ext_resource type="Script" uid="uid://cl3wb3bxemaom" path="res://addons/parallax_generator/parallax_layer_definition.gd" id="1_yygvg"]
+
+[sub_resource type="Resource" id="Resource_04wmn"]
+script = ExtResource("1_yygvg")
+layer_name = "Layer"
+generator_type = &"_gen_mountain"
+motion_scale = Vector2(0.01, 0.1)
+is_resizing = true
+base_width = 1600
+color = Color(0.709055, 0.462608, 0.978685, 1)
+seed = 1234
+amplitude = 300.0
+noise_frequency = 3.0
+noise_zoom = 10.0
+y_offset = -100.0
+ground_y = 0.0
+base_height = 500.0
+metadata/_custom_type_script = "uid://cl3wb3bxemaom"
+
+[sub_resource type="Resource" id="Resource_h80an"]
+script = ExtResource("1_yygvg")
+layer_name = "Layer"
+generator_type = &"_gen_mountain"
+motion_scale = Vector2(0.5, 1)
+is_resizing = true
+base_width = 1600
+color = Color(0.197185, 0.18976, 0.542804, 1)
+seed = 5678
+amplitude = 50.0
+noise_frequency = 5.0
+noise_zoom = 100.0
+y_offset = 100.0
+ground_y = 0.0
+base_height = 500.0
+metadata/_custom_type_script = "uid://cl3wb3bxemaom"
+
+[resource]
+script = ExtResource("1_ia3lo")
+base_definition = SubResource("Resource_04wmn")
+final_definition = SubResource("Resource_h80an")
+metadata/_custom_type_script = "uid://brm5vqjtufvj3"
