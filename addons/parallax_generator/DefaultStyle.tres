@@ -10,14 +10,14 @@ generator_type = &"_gen_mountain"
 motion_scale = Vector2(0.01, 0.1)
 is_resizing = true
 base_width = 1600
-color = Color(0.709055, 0.462608, 0.978685, 1)
+color = Color(0.669471, 0.768631, 0.995662, 1)
 seed = 1234
 amplitude = 300.0
 noise_frequency = 3.0
 noise_zoom = 10.0
 y_offset = -100.0
 ground_y = 0.0
-base_height = 500.0
+base_height = 300.0
 metadata/_custom_type_script = "uid://cl3wb3bxemaom"
 
 [sub_resource type="Resource" id="Resource_h80an"]
@@ -29,12 +29,12 @@ is_resizing = true
 base_width = 1600
 color = Color(0.197185, 0.18976, 0.542804, 1)
 seed = 5678
-amplitude = 50.0
-noise_frequency = 5.0
-noise_zoom = 100.0
+amplitude = 25.0
+noise_frequency = 20.0
+noise_zoom = 25.0
 y_offset = 100.0
-ground_y = 0.0
-base_height = 500.0
+ground_y = 500.0
+base_height = 300.0
 metadata/_custom_type_script = "uid://cl3wb3bxemaom"
 
 [resource]
