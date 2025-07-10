@@ -6,9 +6,7 @@ var panel: Control
 
 func _enter_tree() -> void:
 	panel = PARALLAX_PANEL.instantiate()
-	# Pass the EditorInterface singleton into the panel
-	panel.editor_interface = get_editor_interface() 
-	# Dock it on the left
+	# Dock it
 	add_control_to_dock(DOCK_SLOT_LEFT_BR, panel)
 
 func _exit_tree() -> void:

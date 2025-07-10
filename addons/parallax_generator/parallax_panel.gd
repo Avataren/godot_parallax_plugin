@@ -1,8 +1,10 @@
 @tool
 extends VBoxContainer
 
-const ParallaxLayerResizer = preload("res://addons/parallax_generator/parallax_layer_resizer.gd")
-# Called by your EditorPlugin on instantiate:
+const ProceduralMountainScript = preload("res://addons/parallax_generator/procedural_mountain.gd")
+const ParallaxLayerResizerScript = preload("res://addons/parallax_generator/regenerating_parallax_resizer.gd")
+# preload("res://addons/parallax_generator/parallax_layer_resizer.gd")
+
 func _ready():
 	pass
 
@@ -19,6 +21,7 @@ func _on_generate_button_pressed() -> void:
 	undo_redo.add_do_method(root, "add_child", bg)
 	undo_redo.add_undo_method(root, "remove_child", bg)
 	undo_redo.add_do_method(bg, "set_owner", root)
+	
 	undo_redo.add_undo_method(bg, "set_owner", null)
 
 	# 2) Layer definitions with a new 'width' property for tiling.
@@ -44,24 +47,27 @@ func _on_generate_button_pressed() -> void:
 		}
 	]
 
-	# 3) Create each layer and configure it
+	# Create each layer and configure it
 	for def in layer_defs:
 		var layer = ParallaxLayer.new()
 		layer.name = def.name
 		layer.motion_scale = def.motion_scale
 
-		# NEW: Set mirroring for layers that have a width
+		# NEW: Attach the resizer script to layers that have a width
 		if def.has("width"):
 			layer.motion_mirroring.x = def.width
-			layer.set_script(ParallaxLayerResizer)
+			layer.set_script(ParallaxLayerResizerScript)
 
 		# Schedule layer creation...
 		undo_redo.add_do_method(bg, "add_child", layer)
+		
+		# --- FIX: Add this line to set the layer's owner ---
+		undo_redo.add_do_method(layer, "set_owner", root)
+		# ----------------------------------------------------
+		
 		undo_redo.add_undo_method(bg, "remove_child", layer)
-		undo_redo.add_do_method(layer,"set_owner", root)
-		undo_redo.add_undo_method(layer,"set_owner", null)
 
-		# ...and call its generator
+		# Call its generator
 		var generator_func = def.generator
 		if has_method(generator_func):
 			call(generator_func, layer, def, undo_redo, root)
@@ -89,48 +95,24 @@ func _gen_sun(layer: ParallaxLayer, def: Dictionary, undo_redo: EditorUndoRedoMa
 	undo_redo.add_undo_method(sun_sprite, "set_owner", null)
 
 func _gen_mountain(layer: ParallaxLayer, def: Dictionary, undo_redo: EditorUndoRedoManager, root: Node) -> void:
-	# 1. Configure FastNoiseLite
-	var noise = FastNoiseLite.new()
-	noise.seed = randi()
-	noise.noise_type = FastNoiseLite.TYPE_PERLIN
-	noise.fractal_type = FastNoiseLite.FRACTAL_FBM
-	noise.fractal_octaves = 4
-	noise.fractal_lacunarity = 2.0
-	noise.fractal_gain = 0.5
-	
-	var noise_freq = def.frequency
-	var noise_zoom = def.noise_zoom # NEW: Get the zoom factor
+	# 1. Create an instance of our new ProceduralMountain node
+	var mountain = ProceduralMountainScript.new()
 
-	# 2. Build the point array using circular noise sampling
-	var width = def.width
-	var base_height = 300
-	var amplitude = def.amplitude
-	var y_offset = def.y_offset
-	
-	var points = []
-	var step = 2
-	for x in range(0, width + step, step):
-		var angle = (float(x) / width) * TAU
+	# 2. Configure its properties from the layer definition dictionary
+	mountain.color = def.get("color", Color.WHITE)
+	mountain.seed = randi() # Give each mountain range a unique seed
+	mountain.amplitude = def.get("amplitude", 100)
+	mountain.noise_frequency = def.get("frequency", 2.0)
+	mountain.noise_zoom = def.get("noise_zoom", 30)
+	mountain.y_offset = def.get("y_offset", 0)
+	# You can also set other exported properties like fractal_octaves here if needed
 
-		# Scale the coordinates by noise_zoom to sample a larger area
-		var noise_x = cos(angle) * noise_zoom
-		var noise_y = sin(angle) * noise_zoom
-		
-		# Use frequency to add larger-scale variations on top of the zoomed noise
-		var y_noise = noise.get_noise_2d(noise_x * noise_freq, noise_y * noise_freq)
-		var y = base_height + y_noise * amplitude + y_offset
-		points.append(Vector2(x, y))
-	
-	points.append(Vector2(width, base_height + amplitude * 2))
-	points.append(Vector2(0, base_height + amplitude * 2))
+	# 3. Perform the initial generation using the width from the definition
+	var initial_width = def.get("width", 1600)
+	mountain.generate(initial_width)
 
-	# 3. Create the Polygon2D
-	var poly = Polygon2D.new()
-	poly.polygon = points
-	poly.color = def.color
-
-	# 4. Schedule its addition
-	undo_redo.add_do_method(layer, "add_child", poly)
-	undo_redo.add_undo_method(layer, "remove_child", poly)
-	undo_redo.add_do_method(poly, "set_owner", root)
-	undo_redo.add_undo_method(poly, "set_owner", null)
+	# 4. Schedule its addition to the scene tree
+	undo_redo.add_do_method(layer, "add_child", mountain)
+	undo_redo.add_undo_method(layer, "remove_child", mountain)
+	undo_redo.add_do_method(mountain, "set_owner", root)
+	undo_redo.add_undo_method(mountain, "set_owner", null)
