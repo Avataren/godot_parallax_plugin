@@ -12,14 +12,14 @@ extends Polygon2D
 @export var noise_frequency: float = 3.0
 @export var noise_zoom: float = 50.0
 @export_group("Noise Fractal Settings")
-@export var fractal_octaves: int = 4
+@export var fractal_octaves: int = 6
 @export var fractal_lacunarity: float = 2.0
 @export var fractal_gain: float = 0.5
 
 var _noise: FastNoiseLite
 
 # --- Detail ---
-@export var step_size: int = 20 # The distance between points on the X-axis
+@export var step_size: int = 2 # The distance between points on the X-axis
 
 # Called when the node is added to the scene.
 func _ready():
