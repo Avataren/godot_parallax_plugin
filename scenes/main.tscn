@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://01q1j3wvjq4n"]
+[gd_scene load_steps=3 format=3 uid="uid://01q1j3wvjq4n"]
 
 [ext_resource type="PackedScene" uid="uid://b68r60h4bolg2" path="res://scenes/simple_player.tscn" id="1_o5qli"]
+[ext_resource type="Script" uid="uid://dithf5tf544d7" path="res://addons/parallax_generator/regenerating_parallax_resizer.gd" id="2_sugp2"]
 
 [node name="Main" type="Node2D"]
 
@@ -8,3 +9,58 @@
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
 position = Vector2(576, 321)
+
+[node name="ProceduralParallax" type="ParallaxBackground" parent="."]
+
+[node name="Sun" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0, 0)
+
+[node name="Mountain0" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.3, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain1" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.366667, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain2" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.433333, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain3" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.5, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain4" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.566667, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain5" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.633333, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain6" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.7, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain7" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.766667, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain8" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.833333, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
+
+[node name="Mountain9" type="ParallaxLayer" parent="ProceduralParallax"]
+motion_scale = Vector2(0.9, 1)
+motion_mirroring = Vector2(1600, 0)
+script = ExtResource("2_sugp2")
