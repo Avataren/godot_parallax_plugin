@@ -132,13 +132,14 @@ func _capture_definitions_from_children(nodes: Array) -> Array:
 
 func _build_mountain_definitions(count: int) -> Array:
 	var definitions = []
+	var seed = 666
 	var base_def = { "motion_scale": Vector2(0.3, 1.0), "width": 1600, "color": Color(0.5, 0.5, 0.55), "amplitude": 90, "frequency": 2.0, "noise_zoom": 30, "y_offset": 0 }
-	var final_def = { "motion_scale": Vector2(0.9, 1.0), "color": Color(0.2, 0.2, 0.25), "amplitude": 150, "frequency": 3.5, "noise_zoom": 60, "y_offset": 70 }
+	var final_def = { "motion_scale": Vector2(0.9, 1.0), "color": Color(0.2, 0.2, 0.25), "amplitude": 150, "frequency": 3.5, "noise_zoom": 60, "y_offset": 200 }
 	for i in range(count):
 		var t = 0.0 if count <= 1 else float(i) / (count - 1)
 		definitions.append({
 			"name": "Mountain" + str(i), "generator": "_gen_mountain", "width": base_def.width,
-			"seed": randi(),
+			"seed": seed+i,
 			"motion_scale": base_def.motion_scale.lerp(final_def.motion_scale, t),
 			"color": base_def.color.lerp(final_def.color, t),
 			"amplitude": lerp(base_def.amplitude, final_def.amplitude, t),
